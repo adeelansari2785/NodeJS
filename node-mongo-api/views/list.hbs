@@ -1,0 +1,16 @@
+
+<h1>Students</h1>
+
+<table>
+    <tr>
+
+        <th>First Name</th>
+    <th>Last Name</th>
+    </tr>
+    {{#each data}}
+    <tr>
+        <td>{{this.firstname}}</td>
+        <td>{{this.last_name}}</td>
+    </tr>
+    {{/each}}
+</table>
