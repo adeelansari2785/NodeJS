@@ -50,7 +50,7 @@ function router(req,res){
     let baseURI=url.parse(req.url, true);
     //console.log('Requested route:',req.url);
     //console.log('Request method', req.method);
-    //console.log('Request route', baseURI);
+    //console.log('Request pathname', baseURI);
     let resolveRoute=routes[req.method][baseURI.pathname];
     if(resolveRoute!=undefined){
         req.queryParams=baseURI.query;

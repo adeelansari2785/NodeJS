@@ -1,27 +1,26 @@
 {
   "name": "appmail",
   "version": "1.0.0",
-  "description": "teaching http module",
-  "main": "main.js",
-  "dependencies": {
-    "qr-image": "^3.2.0",
-    "upper-case": "^2.0.1"
-  },
-  "devDependencies": {},
+  "description": "mailing app",
+  "main": "appmail.js",
   "scripts": {
-    "test": "run"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/adeelansari2785/NodeJS.git"
+    "url": "git+ssh://git@github.com/adeelansari2785/NodeJS.git"
   },
+  "keywords": [
+    "nodejs",
+    "mail"
+  ],
   "author": "Dr. Adeel Ansari",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/adeelansari2785/NodeJS/issues"
   },
   "homepage": "https://github.com/adeelansari2785/NodeJS#readme",
-  "keywords": [
-    "mail"
-  ]
+  "dependencies": {
+    "nodemailer": "^6.4.2"
+  }
 }
