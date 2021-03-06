@@ -1,0 +1,404 @@
+Step 1: Create A Project Folder.
+Type: npm install express-generator -g
+Type: npm install nodemon -g
+Type: express NodeJS 
+Type: cd NodeJS
+Type: npm i
+Type: npm i mongoose body-parser cors --save.
+
+Step 2: Create file db.js in NodeJS folder
+--------
+const mongoose=require('mongoose');
+
+mongoose.connect('mongodb://localhost:27017/CRUDDB1',{useNewUrlParser: true, useUnifiedTopology: true }, (err)=>{
+    if(!err){
+        console.log('MongoDB connection succeeded.')
+    }else{
+        console.log('Error in DB Connection:'+JSON.stringify(err,undefined,2))//2 is two space character for printing the error message
+    }
+});
+mongoose.set('useFindAndModify', false);//to avoid deprecated warnings
+module.exports=mongoose;
+--------
+Step 3: Create folders for Models, Controllers
+
+Now in App.js file, add these lines at the top:
+
+//--------------------------------------
+const bodyParser=require('body-parser');
+const {mongoose}=require('./db');
+const employee=require('./routes/employee.routes');
+const cors=require('cors');
+//--------------------------------------
+
+Now add these lines after "var app=express()", :
+
+//--------------------------------------
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended:true}));
+app.use(cors({origin:'http://localhost:4200'})); //this allows cross communication with Angular
+app.use('/employees',employee);  
+//--------------------------------------
+
+Step 4: Create employee.model.js
+//--------------------------------------
+const mongoose=require('mongoose');
+const Schema=mongoose.Schema;
+
+let EmployeeSchema=new Schema({
+    name:{type:String, required:true},
+    designation:{type:String,required:true},
+    department:{type:String, required:true},
+    office:{type:String},
+    salary:{type:Number}
+});
+
+module.exports=mongoose.model('Employee',EmployeeSchema);
+//--------------------------------------
+
+Step 5: Create employee.controller.js
+//--------------------------------------
+const Employee=require('../models/employee.model');
+var ObjectId=require('mongoose').Types.ObjectId;//for handling object id
+
+//this function will perform the insert operation
+exports.emp_create=function(req,res){
+    let employee=new Employee({
+        name: req.body.name,
+        designation: req.body.designation,
+        department:req.body.department,
+        office:req.body.office,
+        salary:req.body.salary
+    });
+
+    employee.save(function(err,doc){
+        if(!err){res.send(doc)}
+        else{console.log('Error in Employee Save:'+JSON.stringify(err,undefined,2));}
+    })
+};
+//this function will fetch all employee documents
+exports.emp_list=function(req,res){
+    Employee.find(function(err, docs){
+        if(!err){res.send(docs)}
+        else{console.log('Error in Retrieving Employees:'+JSON.stringify(err,undefined,2));}
+    });
+};
+//this function will fetch employee by ID
+exports.emp_byID=function(req,res){
+    if(!ObjectId.isValid(req.params.id))
+    return res.status(400).send(`No record with given id:${req.params.id}`);
+
+    Employee.findById(req.params.id,function(err, doc){
+        if (!err) {res.send(doc)}
+        else{console.log('Error in Retrieving Employee:'+JSON.stringify(err,undefined,2));}
+    })
+};
+//this function will update the employee by ID
+exports.emp_update=function(req,res){
+    if(!ObjectId.isValid(req.params.id))
+        return res.status(400).send(`No record with given id:${req.params.id}`);
+
+    Employee.findByIdAndUpdate(req.params.id, {$set: req.body}, function (err, doc) {
+        if (!err) {res.send(doc)}
+        else{console.log('Error in Updating Employee:'+JSON.stringify(err,undefined,2));}
+    });
+};
+//this function will remove the employee by ID
+exports.emp_delete=function(req,res){
+    if(!ObjectId.isValid(req.params.id))
+        return res.status(400).send(`No record with given id:${req.params.id}`);   
+
+    Employee.findByIdAndRemove(req.params.id, function(err,doc){
+        if(!err){ res.send(doc);}
+        else{console.log('Error in Deleting Employee:'+JSON.stringify(err,undefined,2));}
+    })
+};
+//--------------------------------------
+Step 6: Create employee.routes.js
+//--------------------------------------
+const express=require('express');
+const router=express.Router();
+
+const emp_controller=require('../controllers/employee.controller');
+
+router.get('/',emp_controller.emp_list);   
+router.post('/',emp_controller.emp_create);  
+router.get('/:id',emp_controller.emp_byID); 
+router.put('/:id',emp_controller.emp_update); 
+router.delete('/:id',emp_controller.emp_delete);
+
+module.exports=router;
+//--------------------------------------
+
+Step 7: type in terminal and test using Postman: nodemon start
+----------------------------------------
+CREATING THE ANGULAR FRONT END
+
+Step 1: In a new terminal, type: ng new AngularApp
+	Type "y" for Angular Routing and choose "CSS" for styling.
+
+Step 2: In the terminal, type: ng serve --open
+Step 3: type: ng g c employee
+Step 4: Goto app.component.html, clear all contents and type: <app-employee></app-employee>
+Step 5: Goto AngularApp/src/ and open index.html
+
+copy paste these lines in head tag:
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"> 
+
+copy paste this line in the end of the body tag:
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script> 
+
+Step 6: Goto src/app/ and create a folder called 'shared'.
+	Open a new terminal in 'shared' folder and type command: ng g class employee --type=model
+	Also, we need to create a service class, type also here: ng g s employee
+
+Step 7: Open employee.model.ts (in the shared folder) and type:
+//----------------------
+export class Employee {
+    _id:string;
+    name:string;
+    designation:string;
+    department:string;
+    office:string;
+    salary:number;
+}
+//----------------------
+
+Step 8: Open employee.service.ts (in the shared folder) and add at top:
+
+//----------------
+import {HttpClient} from '@angular/common/http';
+import {Observable} from 'rxjs';
+import { map } from 'rxjs/operators';
+import { catchError } from 'rxjs/operators';
+
+import {Employee} from './employee.model'; //import from the model class
+//----------------
+
+And within export "class EmployeeService", add:
+
+//---------------
+  selectedEmployee:Employee; //to be used for insert, update and delete operation
+  employees:Employee[]; //for obtaining a list of employees
+  readonly baseURL='http://localhost:3000/employees';
+//---------------
+
+Within the constructor, add argument:
+
+constructor(private http:HttpClient) { }
+
+Now add the functions within the class:
+
+//---------------functions that will contact NodeJS App----------
+  postEmployee(emp:Employee){
+    return this.http.post(this.baseURL, emp);
+  }
+  
+  getEmployeeList(){
+    return this.http.get(this.baseURL);
+  }
+
+  putEmployee(emp:Employee){
+    return this.http.put(this.baseURL+`/${emp._id}`,emp);
+  }
+
+  deleteEmployee(_id:string){
+    return this.http.delete(this.baseURL+`/${_id}`);
+  }
+//---------------functions----------
+
+Step 9: Open employee.component.ts and add at top:
+
+	//-------------------
+	import {NgForm} from '@angular/forms';
+	import {EmployeeService} from '../shared/employee.service';
+	import {Employee} from '../shared/employee.model';
+
+	declare var M:any;
+	//-------------------
+
+now within @Component, add:
+
+	providers:[EmployeeService];
+
+In the constructor line "constructor() { }", add input argument:
+
+	constructor(public employeeService:EmployeeService) { }
+
+Change: 
+	ngOnInit(): void {
+  	}
+To:
+	ngOnInit() {
+   	    this.resetForm();
+	    this.refreshEmployeeList();
+  	}
+
+Add the functions:
+//--------------------
+  ngOnInit() {//on initialization, call these functions
+    this.resetForm();
+    this.refreshEmployeeList();
+  }
+
+  resetForm(form?: NgForm){
+    if(form)
+      form.reset();
+    this.employeeService.selectedEmployee={
+      _id:"",
+      name:"",
+      designation:"",
+      department:"",
+      office:"",
+      salary:null
+    }
+  }
+
+  refreshEmployeeList(){
+    this.employeeService.getEmployeeList().subscribe((res)=>{
+      this.employeeService.employees=res as Employee[];
+    });
+  }
+  //method that is invoked by form submit
+  onSubmit(form:NgForm){
+    if(form.value._id==""){//insert new employee
+      this.employeeService.postEmployee(form.value).subscribe((res)=>{
+        this.resetForm(form);
+        this.refreshEmployeeList();
+        M.toast({html:'Saved Successfully', classes:'rounded'});
+      });
+    }else{//update new employee
+      this.employeeService.putEmployee(form.value).subscribe((res)=>{
+        this.resetForm(form);
+        this.refreshEmployeeList();
+        M.toast({html:'Updated Successfully', classes:'rounded'});
+      });
+    }
+  }
+
+  onEdit(emp:Employee){
+    this.employeeService.selectedEmployee=emp;
+  }
+
+  onDelete(_id:string, form: NgForm){
+    if(confirm('Are you sure to delete this record?')==true){
+      this.employeeService.deleteEmployee(_id).subscribe((res)=>{
+        this.refreshEmployeeList();
+        this.resetForm(form);
+        M.toast({html:'Deleted Successfully', classes:'rounded'});
+      });
+    }
+  }
+  //--------------------
+
+Step 10: Open employee.component.html and add:
+
+ <div class="row">
+    <div class="col s12">
+        <div class="card">
+            <div class="card-content white-text">
+                <div class="row">
+                    <div class="col s5">
+                  --------<content for form will be here>--------
+                    </div>
+                    <div class="col s7">
+		  --------<content for table will be here>-------
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+-----full code-------------
+<div class="row" >
+    <div class="col s12">
+        <div class="card bg-primary" style="background-color:rgb(36, 83, 211);">
+            <div class="card-content white-text ">
+                <div class="row">
+                    <div class="col s5">
+                        <form #employeeForm="ngForm" (ngSubmit)="onSubmit(employeeForm)">
+                            <input type="hidden" name="_id" #_id="ngModel" [(ngModel)]="employeeService.selectedEmployee._id">
+                            <div class="row">
+                                <div class="input-field col s12">
+                                    <input type="text" name="name" #name="ngModel" [(ngModel)]="employeeService.selectedEmployee.name" placeholder="Enter full name" required>
+                                    <label>Name:
+                                        <label class="red-text">*</label>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="input-field col s12">
+                                    <input type="text" name="designation" #designation="ngModel" [(ngModel)]="employeeService.selectedEmployee.designation" placeholder="Enter Designation">
+                                    <label>Designation</label>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="input-field col s12">
+                                    <input type="text" name="department" #department="ngModel" [(ngModel)]="employeeService.selectedEmployee.department" placeholder="Enter Department">
+                                    <label>Department</label>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="input-field col s12">
+                                    <input type="text" name="office" #office="ngModel" [(ngModel)]="employeeService.selectedEmployee.office" placeholder="Enter Office">
+                                    <label>Office</label>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="input-field col s12">
+                                    <input type="text" name="salary" #salary="ngModel" [(ngModel)]="employeeService.selectedEmployee.salary" placeholder="Enter Salary">
+                                    <label>Salary</label>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="input-field col s12">
+                                    <button class="btn btn-custom right" type="button" (click)="resetForm(employeeForm)">Reset</button>
+                                    <button class="btn btn-custom right" type="submit" [disabled]="!employeeForm.valid">Submit</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="col s7">
+                        <table class="responsive-table highlight">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Designation</th>
+                                    <th>Department</th>
+                                    <th>Office</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tr *ngFor="let emp of employeeService.employees">
+                                <td>{{emp.name}}</td>
+                                <td>{{emp.designation}}</td>
+                                <td>{{emp.department}}</td>
+                                <td>{{emp.office}}</td>
+                                <td>
+                                    <a class="action-btn" (click)="onEdit(emp)">
+                                        <i class="material-icons">edit</i>
+                                    </a>
+                                    <a class="action-btn" (click)="onDelete(emp._id,employeeForm)">
+                                        <i class="material-icons">delete</i>
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+-------------------------
+
+Include in App.module.ts:
+//------------
+import { FormsModule } from '@angular/forms';
+import { HttpClientModule } from '@angular/common/http';
+//------------
+
+and mention in "imports", "FormsModule" and "HttpClientModule".

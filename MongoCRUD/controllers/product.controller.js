@@ -1,8 +1,10 @@
 const Product=require('../models/product.model');
+const fs=require('fs');
+
 
 exports.test=function(req,res){
     res.send('Greetings from the Test Controller');
-}
+};
 
 exports.product_create = function (req, res) {
     let product = new Product(
@@ -40,3 +42,4 @@ exports.product_delete = function (req, res) {
         res.send('Deleted successfully!');
     })
 };
+

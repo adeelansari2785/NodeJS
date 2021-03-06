@@ -1,0 +1,10 @@
+{
+    "name": "my-application",
+    "version": "1.0.0",
+    "description": "my-application application package",
+    "license": "SEE LICENSE IN LICENSE",
+    "author": "Adeel Ansari",
+    "scripts": {
+    }
+  }
+  
