@@ -1,17 +1,17 @@
 {
   "name": "practice",
   "version": "1.0.0",
-  "description": "mongodb",
+  "description": "",
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "dr adeel ansari",
+  "author": "",
   "license": "ISC",
   "dependencies": {
     "body-parser": "^1.19.0",
     "express": "^4.17.1",
-    "mongodb": "^3.6.5",
-    "mongoose": "^5.12.1"
+    "mongoose": "^5.11.15",
+    "nodemon": "^2.0.7"
   }
 }
